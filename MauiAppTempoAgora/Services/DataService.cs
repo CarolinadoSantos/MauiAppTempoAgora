@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-using MauiAppTempoAgora.Models;
+﻿using MauiAppTempoAgora.Models;
+using Newtonsoft.Json.Linq;
 
 namespace MauiAppTempoAgora.Services
 {
@@ -12,7 +7,7 @@ namespace MauiAppTempoAgora.Services
     {
         public static async Task<Tempo?> GetPrevisao(string cidade)
         {
-            Tempo t = null;
+            Tempo? t = null;
 
             string chave = "8ead1b55639847212fca59bffd20e820";
 
@@ -26,8 +21,29 @@ namespace MauiAppTempoAgora.Services
                 if (resp.IsSuccessStatusCode)
                 {
                     string json = await resp.Content.ReadAsStringAsync();
-                }
-            }
+
+                    var rascunho = JObject.Parse(json);
+
+                    DateTime time = new();
+                    DateTime sunrise = time.AddSeconds((double)rascunho["sys"]["sunrise"]).ToLocalTime();
+                    DateTime sunset = time.AddSeconds((double)rascunho["sys"]["sunset"]).ToLocalTime();
+
+
+                    t = new()
+                    {
+                     lat = (double)rascunho["coord"]["lat"],
+                     lon = (double)rascunho["coord"]["lon"],
+                     description = (string)rascunho["weather"][0]["description"],
+                     main = (string)rascunho["weather"][0]["main"],
+                     temp_min = (double)rascunho["main"]["temp_min"],
+                     temp_max = (double)rascunho["main"]["temp_max"],
+                     speed = (double)rascunho["wind"]["speed"],
+                     visibility = (int)rascunho["visibility"],
+                     sunrise = sunrise.ToString(),
+                     sunset = sunset.ToString(),
+                    };//fecha objeto do tempo.
+                }//fecha if se o status do servidor foi de sucesso.
+            }//fecha  laço using.
 
             return t;
         }
